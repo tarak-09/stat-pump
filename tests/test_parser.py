@@ -29,3 +29,14 @@ def test_parse_invalid_metrics():
     assert parse_single_metric("invalid_metric") is None
     assert parse_single_metric("metric:abc|c") is None
     assert parse_single_metric("metric:1|invalid_type") is None
+
+def test_parse_single_metric_with_telegraf_tags():
+    metric = parse_single_metric("cpu.usage,host=server1,region=us-east:85|g")
+    assert metric.name == "cpu_usage"
+    assert metric.tags == {"host": "server1", "region": "us-east"}
+
+def test_parse_single_metric_with_mixed_tags():
+    metric = parse_single_metric("request.count,app=backend:1|c|@0.5|#env:prod")
+    assert metric.name == "request_count"
+    assert metric.sample_rate == 0.5
+    assert metric.tags == {"app": "backend", "env": "prod"}

@@ -17,7 +17,7 @@ This exporter bridges the gap by:
 - **Counters (`c`)**: Accumulates counts and applies sampling rates.
 - **Gauges (`g`)**: Stores the latest value or processes relative updates (`+5`, `-2`).
 - **Timers (`ms`)**: Stores raw values between scrapes to calculate min, max, count, sum, and standard percentiles (`p50`, `p90`, `p99`). To prevent unbounded memory growth, timer percentiles are cleared after each scrape, perfectly aligning with Prometheus Summary semantics.
-- **Tags**: Native support for DogStatsD style tags (e.g. `metric_name:1|c|#env:prod,version:1.2.0`).
+- **Tags**: Native support for DogStatsD style tags (e.g. `metric_name:1|c|#env:prod,version:1.2.0`) and Telegraf style tags (e.g. `metric_name,env=prod,version=1.2.0:1|c`).
 
 ## Installation
 
@@ -68,6 +68,7 @@ echo "cpu.usage:45.5|g|#host:web01" > /dev/udp/127.0.0.1/8125
 echo "db.latency:12|ms|#table:users" > /dev/udp/127.0.0.1/8125
 echo "db.latency:24|ms|#table:users" > /dev/udp/127.0.0.1/8125
 echo "db.latency:36|ms|#table:users" > /dev/udp/127.0.0.1/8125
+echo "mem.usage,host=web01,region=us-east:1024|g" > /dev/udp/127.0.0.1/8125
 ```
 
 3. Scrape the Prometheus `/metrics` endpoint:
@@ -81,6 +82,8 @@ curl -s http://127.0.0.1:9102/metrics
 user_logins{env="prod"} 3.0
 # TYPE cpu_usage gauge
 cpu_usage{host="web01"} 45.5
+# TYPE mem_usage gauge
+mem_usage{host="web01",region="us-east"} 1024.0
 # TYPE db_latency summary
 db_latency{quantile="0.5",table="users"} 24.0
 db_latency{quantile="0.9",table="users"} 33.6

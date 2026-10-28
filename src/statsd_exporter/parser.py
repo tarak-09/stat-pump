@@ -31,6 +31,19 @@ def parse_single_metric(line: str) -> Optional[Metric]:
         
     name_part, rest = line.split(':', 1)
     
+    tags = {}
+    
+    # Parse Telegraf-style tags
+    if ',' in name_part:
+        parts = name_part.split(',')
+        name_part = parts[0]
+        for tag_pair in parts[1:]:
+            if '=' in tag_pair:
+                k, v = tag_pair.split('=', 1)
+                tags[k] = v
+            else:
+                tags[tag_pair] = "true"
+    
     # name formatting for prometheus (replace . and - with _)
     name = re.sub(r'[^a-zA-Z0-9_]', '_', name_part)
     
@@ -49,7 +62,6 @@ def parse_single_metric(line: str) -> Optional[Metric]:
         return None
         
     sample_rate = 1.0
-    tags = {}
     
     for part in parts[2:]:
         if part.startswith('@'):

@@ -34,3 +34,24 @@ async def test_server_e2e():
                 assert text == "OK"
     finally:
         await stop_servers(transport, runner)
+
+@pytest.mark.asyncio
+async def test_server_telegraf_tags():
+    transport, runner = await start_servers("127.0.0.1", 8127, "127.0.0.1", 9104)
+    
+    try:
+        await asyncio.sleep(0.1)
+        
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.sendto(b"test.telegraf,env=prod,region=us-east:10|c", ("127.0.0.1", 8127))
+        sock.close()
+        
+        await asyncio.sleep(0.1)
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get("http://127.0.0.1:9104/metrics") as response:
+                assert response.status == 200
+                text = await response.text()
+                assert 'test_telegraf{env="prod",region="us-east"} 10.0' in text
+    finally:
+        await stop_servers(transport, runner)
